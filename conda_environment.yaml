@@ -53,5 +53,3 @@ dependencies:
   - zlib=1.2.11=h1de35cc_3
   - pip:
     - pyqtgraph==0.10.0
-prefix: /Users/fukai/.anaconda3/envs/ising_simulation
-

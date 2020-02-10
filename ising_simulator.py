@@ -6,9 +6,9 @@
 import numpy as np
 from numba import jit,njit
 
-LATTICE_SIZE=32
+LATTICE_SIZE=64
 DISPLAY_UPDATE_RATIO=0.1
-#@njit(inline="always")
+#@njit(inline="always") #<- only works with numba > 0.47
 @njit
 def periodic_round(i): 
     return (i+LATTICE_SIZE)%LATTICE_SIZE
@@ -47,7 +47,7 @@ TEMP_INDICATOR_WIDTH=32
 TEMP_INDICATOR_PADDING=10
 TEMP_INDICATOR_CIRCLE_RADIUS=24
 COLOR_0=(1,1,0)
-COLOR_1=(0,0.3,0.3)
+COLOR_1=(0,0.6,0.7)
 
 #ignore key press event for ImageView
 class ImageViewCustom(pg.ImageView):
@@ -61,24 +61,17 @@ class ImageViewCustom(pg.ImageView):
         #XXX dirty hack
         height=self.size().height()
         self.setFixedWidth(height)
-#     def hasWidthForHeight(self):
-#        return True
-#    def widthForHeight(self,height):
-#        return height
 
+#temperature indicator
 class _TempIndicator(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setSizePolicy(QSizePolicy.Minimum,
                            QSizePolicy.Expanding)
     def paintEvent(self, event):
-#        print("paint",self.value)
         painter = QPainter(self)
         brush = QBrush()
         brush.setStyle(Qt.SolidPattern)
-#        brush.setColor(QColor('black'))
-#        rect = QRect(0, 0, painter.device().width(), painter.device().height())
-#        painter.fillRect(rect, brush)
         d_width = painter.device().width()
         d_height = painter.device().height()
         brush.setColor(QColor('red'))
@@ -94,14 +87,13 @@ class _TempIndicator(QWidget):
                 QPoint(d_width/2,d_height-TEMP_INDICATOR_CIRCLE_RADIUS), 
                 TEMP_INDICATOR_CIRCLE_RADIUS, TEMP_INDICATOR_CIRCLE_RADIUS)
         painter.end()
-
     def setValue(self,value):
-#        print("set",value)
         if value > 1.: value=1.
         if value < 0.: value=0.
         self.value=value
         self.update()
 
+#instruction image display
 class _InstructionImage(QLabel):
     def __init__(self,image, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,10 +108,13 @@ class _InstructionImage(QLabel):
         self.setPixmap(pix2)
         self.show()
     
+#main GUI window
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
+        #initialize spins
         self.spins=np.random.randint(0,2,(LATTICE_SIZE,LATTICE_SIZE))*2-1
+
         self.T=5.
         titleBarHeight = self.style().pixelMetric(
             QStyle.PM_TitleBarHeight,QStyleOptionTitleBar(),self)
@@ -129,15 +124,13 @@ class MainWindow(QMainWindow):
         self.setGeometry(geometry)
         self.initUI()
 
+    #change temperature with key press events
     def keyPressEvent(self, event):
         key = event.key()
         if key == Qt.Key_Up:
             if self.T < T_MAX: self.T+=T_STEP
         if key == Qt.Key_Down:
             if self.T > T_MIN: self.T-=T_STEP
-#        if key == Qt.Key_Right:
-#            LATTICE_SIZE=LATTICE_SIZE*2
-#            self.spins=np.random.randint(0,2,(LATTICE_SIZE,LATTICE_SIZE))*2-1
         self.ind.setValue((self.T-T_MIN)/(T_MAX-T_MIN))
         self.statusBar().showMessage('Temperature: %.2f'%self.T)
 
@@ -160,6 +153,7 @@ class MainWindow(QMainWindow):
         self.imv.setColorMap(pg.ColorMap((0,1),(COLOR_0,COLOR_1)))
         hb.addWidget(self.imv)
 
+        #temperature indicator 
         vb_temp = QVBoxLayout()
         label_high=QLabel()
         label_high.setPixmap(QPixmap("hot.png").scaledToHeight(32,Qt.SmoothTransformation))
@@ -194,30 +188,12 @@ class MainWindow(QMainWindow):
         self.imv.setImage(self.spins.astype(np.float),levels=(0.,1.),autoHistogramRange=False)
 
     def update(self):
-#        self.spins=np.random.randint(0,2,(LATTICE_SIZE,LATTICE_SIZE))*2-1
         updateIsing(self.spins,self.T)
         self.showImage()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('IsingSim.ico'))
     window = MainWindow()
     sys.exit(app.exec_())
 
-
-#class MainWindow(QMainWindow):
-#    def __init__(self, *args, **kwargs):
-##        w = QWidget()
-##        vb = QVBoxLayout()
-##        self.grid = QGridLayout()
-##        self.grid.setSpacing(5)
-##        vb.addLayout(self.grid)
-##        w.setLayout(vb)
-##        self.setCentralWidget(w)
-
-#def main():
-#    app = QApplication(sys.argv)
-#    window = MainWindow()
-#    sys.exit(app.exec_())
-#
-#if __name__ == '__main__':
-#    main()
