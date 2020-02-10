@@ -2,7 +2,7 @@
 
 ## Description
 
-A simple simulator for the Ising model, used in an exhibition "相転移の世界 / Phase Transitions:Wonder and Beauty of Physics".
+A simple simulator for the Ising model, used in the exhibition "相転移の世界 / Phase Transitions:Wonder and Beauty of Physics".
 
 ## Usage
 requirement: conda 
