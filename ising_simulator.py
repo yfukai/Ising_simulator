@@ -4,7 +4,7 @@
 #### simulation code ####
 
 import numpy as np
-from numba import jit,njit
+from numba import njit
 
 LATTICE_SIZE=64
 DISPLAY_UPDATE_RATIO=0.1
